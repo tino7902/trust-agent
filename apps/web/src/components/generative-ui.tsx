@@ -3,24 +3,36 @@
 /**
  * Generative UI, controlled tier.
  *
- * `useComponent` gives the agent a catalog of *your* React components and lets
- * it choose one and fill in the props. The interface stays on-brand because you
- * wrote it — the agent only decides what to show.
+ * The agent gets a catalog of *your* React components and picks one, filling in
+ * the props. The interface stays on-brand because you wrote it — the agent only
+ * decides what to show.
  *
- * Trust Agent registers three: the verdict, the per-claim breakdown, and the
- * sources. The verdict enum here is the contract with the prompt in
+ * WHY `useFrontendTool` AND NOT `useComponent`:
+ *
+ * `useComponent` only takes `render` — it has no `handler`, so the tool call it
+ * creates never produces a result. The first message looks fine. On the SECOND
+ * message the client replays the thread history, that orphaned call comes back
+ * with it, and the run dies before it starts with
+ * "Tool result is missing for tool call …". Reproduced by replaying a history
+ * containing a card call with no result.
+ *
+ * `useFrontendTool` takes both: `render` draws the card and `handler` closes
+ * the call. The handler's return value is what the model reads next, so it
+ * doubles as the instruction not to repeat the card's content in prose.
+ *
+ * The verdict enum here is the contract with the prompt in
  * packages/agent-core/src/verify-prompt.ts — change one and you must change the
  * other, or the card falls back to "Analizando…" forever.
  *
  * Renderers receive streamed partial arguments before schema defaults apply.
  */
-import { useComponent, useHumanInTheLoop } from "@copilotkit/react-core/v2";
+import { useFrontendTool } from "@copilotkit/react-core/v2";
 import { z } from "zod";
 
 import { ClaimCheck, SourcesList, VerdictCard } from "./verdict-cards";
 
 export function GenerativeUI() {
-  useComponent({
+  useFrontendTool({
     name: "verdict_card",
     description:
       "Muestra el veredicto sobre el mensaje analizado. Llamalo apenas tengas una conclusión respaldada por búsquedas: es lo primero que lee la persona.",
@@ -39,10 +51,12 @@ export function GenerativeUI() {
         .optional()
         .describe("Quién lo mandó y cuándo, si consta en el contexto de la pantalla."),
     }),
-    render: VerdictCard,
+    handler: async () =>
+      "La tarjeta del veredicto ya quedó en pantalla. No repitas su contenido en texto.",
+    render: ({ args }) => <VerdictCard {...args} />,
   });
 
-  useComponent({
+  useFrontendTool({
     name: "claim_check",
     description:
       "Desglosa las afirmaciones del mensaje con su estado individual. Llamalo cuando el mensaje mezcla más de una afirmación, que es lo habitual en una cadena.",
@@ -61,10 +75,12 @@ export function GenerativeUI() {
         .max(6)
         .default([]),
     }),
-    render: ClaimCheck,
+    handler: async () =>
+      "El desglose de afirmaciones ya quedó en pantalla. No lo repitas en texto.",
+    render: ({ args }) => <ClaimCheck {...args} />,
   });
 
-  useComponent({
+  useFrontendTool({
     name: "sources_list",
     description:
       "Muestra las fuentes que respaldan el veredicto para que se puedan abrir. CRÍTICO: solo URLs devueltas por search_web. Nunca escribas acá una dirección de memoria.",
@@ -82,68 +98,30 @@ export function GenerativeUI() {
         .max(6)
         .default([]),
     }),
-    render: SourcesList,
+    handler: async () =>
+      "Las fuentes ya quedaron en pantalla con sus enlaces. No las repitas en texto; cerrá con una o dos frases sobre qué hacer.",
+    render: ({ args }) => <SourcesList {...args} />,
   });
 
   /**
-   * Inherited approval gate, kept for any action added later.
+   * The inherited `propose_action` approval gate was REMOVED, deliberately.
    *
-   * Trust Agent's real control boundary sits earlier and outside this app: the
-   * extension shows the exact text and sends nothing until the user clicks
-   * Verificar. Nothing in this flow writes anywhere, so this gate is currently
-   * unused — it stays because the moment someone adds "report this to the
-   * group" it is the right shape for it.
+   * It is a human-in-the-loop tool: it returns no result until someone clicks.
+   * With `maxSteps: 10` the agent's loop continues past a client tool call it
+   * has no result for, the run finishes, and the browser reports
+   * "Tool result is missing for tool call …". The runtime's own types say as
+   * much — interrupt tools "require the default maxSteps: 1".
    *
-   * `respond` is a function ONLY while the tool call is executing — narrowing on
-   * its presence is safer than importing the ToolCallStatus enum from
-   * @copilotkit/core, which is only a transitive dependency here.
+   * Nothing here needs it. Trust Agent performs no irreversible action: it
+   * reads, searches and reports. Its real control boundary sits earlier and
+   * outside this app — the extension shows the exact text and sends nothing
+   * until the person clicks Verificar. Worse, the inherited description
+   * ("Llamalo PRIMERO") actively invited the model to call a gate that guards
+   * nothing.
+   *
+   * If a future version adds a real write — "publicá el desmentido en el
+   * grupo" — bring it back together with the maxSteps constraint above.
    */
-  useHumanInTheLoop({
-    name: "propose_action",
-    description:
-      "Pedí autorización antes de cualquier acción irreversible. Llamalo PRIMERO y seguí solo si devuelve aprobación.",
-    parameters: z.object({
-      action: z.string().describe("Qué vas a hacer, en una frase."),
-      blastRadius: z.string().describe("A qué afecta si sale mal."),
-    }),
-    render: ({ args, respond, result }) => {
-      if (!respond) {
-        return (
-          <article className="ck-card ck-card--gate">
-            <p className="ck-gate-done">{result ? String(result) : "Esperando…"}</p>
-          </article>
-        );
-      }
-      return (
-        <article className="ck-card ck-card--gate">
-          <h3>{args.action ?? "Confirmá esta acción"}</h3>
-          <p>{args.blastRadius}</p>
-          <div className="ck-actions">
-            <button
-              type="button"
-              className="ck-btn ck-btn--primary"
-              onClick={() =>
-                respond("La persona aprobó. Seguí y contá exactamente qué hiciste.")
-              }
-            >
-              Aprobar
-            </button>
-            <button
-              type="button"
-              className="ck-btn"
-              onClick={() =>
-                respond(
-                  "La persona rechazó. No hagas la acción, no ofrezcas un rodeo, y decí claramente que no se cambió nada.",
-                )
-              }
-            >
-              Cancelar
-            </button>
-          </div>
-        </article>
-      );
-    },
-  });
 
   // Hooks register into the chat stream, so this component renders nothing.
   return null;

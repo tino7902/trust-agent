@@ -40,7 +40,7 @@ CopilotKit), commit `86f547d`. Concretamente:
 
 | Qué | Dónde |
 |---|---|
-| La extensión de Chrome completa: captura en cascada del DOM de WhatsApp Web, panel lateral y puente `postMessage` | `extension/` |
+| La extensión de Chrome completa: captura en cascada del DOM de WhatsApp Web y Gmail, panel lateral y puente `postMessage` | `extension/` |
 | El prompt del verificador, con veredicto de cuatro valores y la prohibición de citar URLs no devueltas por la búsqueda | `packages/agent-core/src/verify-prompt.ts` |
 | **El cableado de Exa al chat web.** El kit registra Exa en Slack y en la ruta de voz, pero *no* en el chat web; `searchWebTool()` y la opción `tools` de `makeAgent` son nuestras | `packages/agent-core/src/capabilities/search.ts`, `agent.ts`, `apps/web/.../api/copilotkit/route.ts` |
 | Captura validada y acotada, con el origen verificado en los dos extremos | `apps/web/src/lib/captured-message.ts`, `use-captured-message.ts` |
@@ -53,18 +53,24 @@ CopilotKit), commit `86f547d`. Concretamente:
 
 **Título:** Trust Agent
 
-**Qué construimos.** Un verificador de mensajes reenviados que vive en el panel lateral
-de Chrome, al lado de WhatsApp Web. Seleccionás la cadena que te llegó, el panel te
-muestra el texto exacto que va a salir del navegador, y al confirmar el agente separa las
-afirmaciones, busca evidencia pública con Exa y devuelve un veredicto —verificado, falso,
-engañoso o sin evidencia suficiente— con las fuentes abribles.
+**Qué construimos.** Un verificador de mensajes reenviados y mails que vive en el panel
+lateral de Chrome, al lado de WhatsApp Web y Gmail. Seleccionás la cadena o el mail que
+te llegó, el panel te muestra el texto exacto que va a salir del navegador, y al
+confirmar el agente separa las afirmaciones, busca evidencia pública con Exa y devuelve
+un veredicto —verificado, falso, engañoso o sin evidencia suficiente— con las fuentes
+abribles.
 
-**Para quién.** Para quien recibe un audio o una cadena alarmista en el grupo familiar de
-WhatsApp y quiere saber si contestar, reenviar o dejarlo pasar. No es experto: el
-veredicto está escrito en lenguaje llano, para que pueda responderle a un familiar.
+Son dos superficies con el mismo motor: la cadena del grupo familiar y el mail de
+phishing son el mismo problema —alguien quiere que le creas— resuelto en el lugar donde
+ya estabas.
+
+**Para quién.** Para quien recibe una cadena alarmista en el grupo familiar de WhatsApp,
+o un mail que dice que le suspenden la cuenta en 24 horas, y quiere saber si contestar,
+reenviar o dejarlo pasar. No es experto: el veredicto está escrito en lenguaje llano.
 
 **Por qué importa el contexto.** Al leer la pantalla, el agente sabe quién mandó el
-mensaje, cuándo y en qué conversación. Eso es lo que distingue «una cadena que circula
+mensaje, cuándo, y en qué conversación o bajo qué asunto. En Gmail eso incluye el
+dominio del remitente, que es justo donde se delata un phishing. Eso es lo que distingue «una cadena que circula
 desde hace años» de «un mensaje nuevo de un número desconocido», y es justo lo que se
 pierde al pegar el texto en un chatbot: el remitente, la fecha y el hilo previo
 desaparecen. Sin el entorno, el usuario además tiene que hacer el trabajo de copiar,
@@ -85,7 +91,7 @@ un criterio de puntuación.
 
 | Criterio oficial | Nuestra evidencia | Estado |
 |---|---|---|
-| Core Requirements & Functionality | Flujo completo dentro de WhatsApp Web: selección → confirmación → búsqueda → veredicto con fuentes abribles | **verificado contra el agente**, `PENDIENTE` en la extensión |
+| Core Requirements & Functionality | Flujo completo dentro de WhatsApp Web y Gmail: selección → confirmación → búsqueda → veredicto con fuentes abribles | **verificado contra el agente**, `PENDIENTE` en la extensión |
 | Innovation & Theme Alignment | Mostrar la conversación **antes** del prompt; comparar con el mismo mensaje pegado en un chatbot, que pierde remitente, fecha e hilo | `PENDIENTE` grabación |
 | Technical Execution & Integration | Los caminos de fallo de abajo, incluida la resistencia a inyección | **verificado** salvo lo marcado |
 | Usefulness & Agentic Experience | El texto exacto a la vista antes de enviarlo; **Descartar** garantiza que nada sale del navegador; veredicto en lenguaje llano y accionable | `PENDIENTE` grabación |
@@ -127,6 +133,13 @@ y señaló el intento de inyección como parte del engaño.
 devolvió `search_web`: **0 inventadas** sobre 10 citas en las dos corridas. Verificamos
 además que las fuentes responden HTTP 200 (el 403 de AFP Factual es bloqueo anti-bot a
 `curl`, no una URL inexistente).
+
+**Corrida 3 — mail de phishing (Gmail).** Remitente `seguridad@mercadopag0-ar.com`,
+asunto «Acción urgente: su cuenta será suspendida en 24hs», pidiendo usuario, contraseña
+y código SMS en `mercadopag0-ar.com/validar`. El agente hizo 4 búsquedas, dictaminó
+**falso**, detectó que el dominio no es el oficial de Mercado Pago (typosquatting con un
+cero por la «o»), y señaló la urgencia de 24 horas como técnica de presión. No abrió el
+enlace ni pidió credenciales. 0 URLs inventadas.
 
 **Comprobaciones de sponsor por separado:** OpenRouter responde con el modelo configurado
 ($0.00026 por una llamada trivial; una verificación completa ronda el centavo). Exa
