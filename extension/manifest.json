@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Trust Agent — ¿esto es verdad?",
+  "version": "0.1.0",
+  "description": "Verificá un mensaje reenviado de WhatsApp Web sin salir de la conversación, con fuentes que podés abrir.",
+  "permissions": ["sidePanel", "scripting", "activeTab", "contextMenus"],
+  "host_permissions": ["https://web.whatsapp.com/*"],
+  "background": { "service_worker": "background.js" },
+  "side_panel": { "default_path": "sidepanel/panel.html" },
+  "action": { "default_title": "Abrir Trust Agent" },
+  "content_scripts": [
+    {
+      "matches": ["https://web.whatsapp.com/*"],
+      "js": ["content/whatsapp.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

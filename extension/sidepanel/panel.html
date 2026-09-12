@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Trust Agent</title>
+    <link rel="stylesheet" href="panel.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <span class="brand">Trust Agent</span>
+      <button id="capture" type="button" class="primary">Capturar mensaje</button>
+    </header>
+
+    <!--
+      The control boundary. Nothing leaves the browser until the user reads the
+      exact text here and presses Verificar.
+    -->
+    <section id="preview" class="preview" hidden>
+      <p class="preview-label">Se va a enviar este texto para verificar:</p>
+      <p id="preview-meta" class="preview-meta"></p>
+      <blockquote id="preview-text"></blockquote>
+      <div class="actions">
+        <button id="send" type="button" class="primary">Verificar</button>
+        <button id="discard" type="button">Descartar</button>
+      </div>
+    </section>
+
+    <p id="status" class="status" hidden></p>
+
+    <!-- The app itself. Kept out of WhatsApp's page, and its CSP, on purpose. -->
+    <iframe id="app" title="Trust Agent" src="http://localhost:3100/"></iframe>
+
+    <script src="panel.js"></script>
+  </body>
+</html>
