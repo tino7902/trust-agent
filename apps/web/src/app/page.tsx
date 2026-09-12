@@ -24,17 +24,23 @@ export default function Home() {
     {
       suggestions: [
         {
-          title: "¿Es verdad?",
-          message:
-            "Verificá el mensaje que tengo capturado en el panel. Separá las afirmaciones y mostrame las fuentes.",
+          title: "Veracidad de noticia",
+          message: "Verificá la veracidad de esta noticia.",
         },
         {
-          title: "¿Parece una estafa?",
-          message:
-            "¿Parece una estafa o intento de phishing? Decime qué señales ves y qué conviene hacer, sin abrir enlaces ni dar datos.",
+          title: "¿Phishing o estafa?",
+          message: "¿Esto puede ser phishing o una estafa?",
+        },
+        {
+          title: "Esto es real",
+          message: "esto es real",
+        },
+        {
+          title: "Esto es verdadero",
+          message: "esto es verdadero",
         },
       ],
-      available: "before-first-message",
+      available: "always",
     },
     [],
   );
@@ -141,6 +147,11 @@ export default function Home() {
           <CopilotChat
             className="ck-chat"
             threadId={conversationId}
+            inputContainer="ta-chat-input-container"
+            suggestionView={{
+              container: "ta-quick-messages",
+              suggestion: "ta-quick-message",
+            }}
             labels={{
               welcomeMessageText: captured
                 ? "Tengo el contenido. ¿Lo verifico?"
@@ -155,7 +166,19 @@ export default function Home() {
               userMessageToolbarCopyMessageLabel: "Copiar",
               userMessageToolbarEditMessageLabel: "Editar",
             }}
-          />
+          >
+            {({ scrollView, feather, suggestionView, inputContainer }) => (
+              <div className="ta-chat-layout">
+                <div className="ta-chat-scroll">{scrollView}</div>
+                {feather}
+                <div className="ta-quick-actions" aria-label="Mensajes rápidos">
+                  <p>Mensajes rápidos</p>
+                  {suggestionView}
+                </div>
+                {inputContainer}
+              </div>
+            )}
+          </CopilotChat>
         </section>
       </main>
     </>
