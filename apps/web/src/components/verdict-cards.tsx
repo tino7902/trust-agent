@@ -33,11 +33,25 @@ export interface SourcesListProps {
   } | null> | null;
 }
 
+/**
+ * What the badge says. This is the display text only — the verdict ENUM
+ * (`verificado` | `falso` | `engañoso` | `sin_evidencia`) is the contract with
+ * the prompt and must not change here. Renaming a label is safe; renaming a
+ * value breaks the card.
+ */
 const VERDICT_LABEL: Record<VerdictValue, string> = {
-  verificado: "Verificado",
-  falso: "Falso",
+  verificado: "Info verdadera",
+  falso: "Fake news",
   engañoso: "Engañoso",
   sin_evidencia: "Sin evidencia suficiente",
+};
+
+/** Compact labels for the per-claim rows, where space is tighter. */
+const CLAIM_LABEL: Record<VerdictValue, string> = {
+  verificado: "Verdadero",
+  falso: "Falso",
+  engañoso: "Engañoso",
+  sin_evidencia: "Sin evidencia",
 };
 
 const VERDICT_HINT: Record<VerdictValue, string> = {
@@ -69,7 +83,7 @@ export function VerdictCard({ verdict, headline, reasoning, claimedBy }: Verdict
       {known && <p className="ta-verdict-hint">{VERDICT_HINT[verdict]}</p>}
       {reasoning && <p>{reasoning}</p>}
       {claimedBy && (
-        <p className="ck-muted">
+        <p className="ta-verdict-claimed">
           <strong>Lo afirma el mensaje:</strong> {claimedBy}
         </p>
       )}
@@ -90,7 +104,7 @@ export function ClaimCheck({ title, claims }: ClaimCheckProps) {
     <article className="ck-card">
       <h3>{title || "Afirmaciones del mensaje"}</h3>
       {!claims?.length ? (
-        <p className="ck-muted">Separando las afirmaciones…</p>
+        <p>Separando las afirmaciones…</p>
       ) : (
         <ul className="ta-claims">
           {claims.map((claim, index) => {
@@ -105,13 +119,13 @@ export function ClaimCheck({ title, claims }: ClaimCheckProps) {
                   {status && (
                     <span className="ta-claim-status">
                       {isVerdict(status)
-                        ? VERDICT_LABEL[status]
+                        ? CLAIM_LABEL[status]
                         : status === "opinion"
                           ? "Opinión, no verificable"
                           : status}
                     </span>
                   )}
-                  {claim?.note && <p className="ck-muted">{claim.note}</p>}
+                  {claim?.note && <p className="ta-claim-note">{claim.note}</p>}
                 </div>
               </li>
             );
@@ -127,7 +141,7 @@ export function SourcesList({ title, sources }: SourcesListProps) {
     <article className="ck-card">
       <h3>{title || "Fuentes"}</h3>
       {!sources?.length ? (
-        <p className="ck-muted">Buscando evidencia…</p>
+        <p>Buscando evidencia…</p>
       ) : (
         <ol className="ta-sources">
           {sources.map((source, index) => (
@@ -142,7 +156,7 @@ export function SourcesList({ title, sources }: SourcesListProps) {
               {source?.published && (
                 <span className="ta-source-date"> · {source.published}</span>
               )}
-              {source?.quote && <p className="ck-muted">“{source.quote}”</p>}
+              {source?.quote && <p className="ta-source-quote">“{source.quote}”</p>}
             </li>
           ))}
         </ol>

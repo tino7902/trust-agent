@@ -63,10 +63,8 @@ export default function Home() {
             <div className="ck-detail ta-captured">
               <div className="ta-captured-meta">
                 {captured.author && <strong>{captured.author}</strong>}
-                {captured.chat && <span className="ck-muted"> · {captured.chat}</span>}
-                {captured.timestamp && (
-                  <span className="ck-muted"> · {captured.timestamp}</span>
-                )}
+                {captured.chat && <span> · {captured.chat}</span>}
+                {captured.timestamp && <span> · {captured.timestamp}</span>}
               </div>
               <p className="ck-preserve-lines ta-captured-text">{captured.text}</p>
               {captured.thread.length > 0 && (
@@ -138,6 +136,14 @@ export default function Home() {
                 ? "Tengo el mensaje. ¿Lo verifico?"
                 : "Capturá un mensaje para empezar.",
               chatInputPlaceholder: "Preguntá sobre este mensaje…",
+              chatDisclaimerText:
+                "Puede equivocarse. Abrí las fuentes y leelas antes de decidir.",
+              assistantMessageToolbarCopyMessageLabel: "Copiar",
+              assistantMessageToolbarRegenerateLabel: "Volver a verificar",
+              assistantMessageToolbarThumbsUpLabel: "Buena respuesta",
+              assistantMessageToolbarThumbsDownLabel: "Mala respuesta",
+              userMessageToolbarCopyMessageLabel: "Copiar",
+              userMessageToolbarEditMessageLabel: "Editar",
             }}
           />
         </section>

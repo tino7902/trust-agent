@@ -4,7 +4,7 @@
   --surface: #fff;
   --border: #dbdbe5;
   --text: #010507;
-  --muted: #57575b;
+  --muted: #3f3f46;
   --accent: #010507;
   color-scheme: light;
 }
@@ -532,116 +532,277 @@ p {
   overflow-wrap: anywhere;
 }
 
+
 /* ─────────────────────────────────────────────────────────────────────────
-   Trust Agent — verdict panel
-   Sits on top of the kit's tokens (--muted, --accent, --border …) so light
-   and dark behave the same as the rest of the app.
+   Trust Agent — panel del verificador
+
+   Este panel vive dentro de un iframe de ~400px en el costado del navegador,
+   no en una ventana de escritorio. Todo lo de acá abajo existe para que el
+   veredicto se lea de un vistazo en ese ancho.
    ───────────────────────────────────────────────────────────────────────── */
 
+/* El kit apunta a una pantalla ancha con fondo gris y tarjetas flotantes. En
+   un panel angosto eso desperdicia los bordes, así que lo aplanamos. */
+body {
+  background: var(--surface);
+}
+
 .ta-panel {
-  max-width: 34rem;
+  max-width: 100%;
+  padding: 0.75rem;
+  gap: 0.75rem;
+}
+
+.ta-panel .ck-panel {
+  padding: 0.75rem;
+  border-radius: 0.6rem;
+}
+
+/* El encabezado se queda con lo justo: en un panel, el título es un rótulo,
+   no una portada. */
+.ta-panel .ck-workspace-header {
+  margin-bottom: 0;
+}
+
+.ta-panel h1 {
+  font-size: 1.15rem;
+  margin: 0.1rem 0;
+}
+
+.ta-panel .ck-intro {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ── El mensaje capturado ────────────────────────────────────────────────
+   Una cadena reenviada puede ser larguísima y empujaba el veredicto fuera de
+   la vista. Se le da una altura máxima con scroll propio: el mensaje sigue
+   entero y disponible, pero deja de competir por la pantalla. */
+.ta-captured-text {
+  max-height: 7.5rem;
+  overflow-y: auto;
+  font-size: 0.92rem;
+  margin: 0.4rem 0 0.6rem;
+  padding: 0.1rem 0 0.1rem 0.75rem;
 }
 
 .ta-captured-meta {
-  font-size: 0.9rem;
-  margin-bottom: 0.4rem;
-}
-
-.ta-captured-text {
-  border-left: 3px solid var(--border);
-  padding-left: 0.75rem;
-  margin: 0.5rem 0 0.75rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
 }
 
 .ta-empty {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  align-items: flex-start;
+  align-items: stretch;
+}
+
+.ta-empty p {
+  margin: 0;
+  font-size: 0.9rem;
 }
 
 .ta-paste {
   width: 100%;
   font: inherit;
+  font-size: 0.92rem;
   padding: 0.6rem;
   border: 1px solid var(--border);
   border-radius: 0.5rem;
-  background: transparent;
-  color: inherit;
+  background: var(--surface);
+  color: var(--text);
   resize: vertical;
 }
 
-/* Verdict. The border colour is the fastest read on the card, so each verdict
-   owns one and the label repeats it in words for anyone who cannot use it. */
-.ta-verdict-label {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.72rem;
-  font-weight: 600;
-  margin: 0 0 0.25rem;
-  color: var(--muted);
+/* ── Color del texto ─────────────────────────────────────────────────────
+   Regla única: dentro de una tarjeta, TODO el texto va en el color normal.
+   Nada de gris de apoyo. Este panel mide ~400px y lo que lleva es el
+   razonamiento de un veredicto — no hay texto secundario que merezca menos
+   contraste. Las únicas excepciones son los enlaces y las marcas de color
+   del veredicto, definidas más abajo.
+   ───────────────────────────────────────────────────────────────────────── */
+.ck-card,
+.ck-card p,
+.ck-card li,
+.ck-card span,
+.ck-card strong,
+.ck-card em,
+.ck-card h3,
+.ck-card dd,
+.ck-card dt,
+.ck-chat p,
+.ck-chat li,
+.ta-panel p,
+.ta-panel span {
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text) !important;
+  opacity: 1 !important;
 }
 
-.ta-verdict--verificado { border-left-color: #2e7d5b; }
-.ta-verdict--verificado .ta-verdict-label { color: #2e7d5b; }
-.ta-verdict--falso { border-left-color: #c0392b; }
-.ta-verdict--falso .ta-verdict-label { color: #c0392b; }
-.ta-verdict--engañoso { border-left-color: #c77700; }
-.ta-verdict--engañoso .ta-verdict-label { color: #c77700; }
-.ta-verdict--sin_evidencia { border-left-color: var(--muted); }
+/* Los enlaces de fuentes sí se distinguen: tienen que verse clicables. */
+.ck-card a,
+.ta-sources a {
+  color: #0b4fc4 !important;
+  -webkit-text-fill-color: #0b4fc4 !important;
+}
+
+/* ── Veredicto ───────────────────────────────────────────────────────────
+   El color del borde es la lectura más rápida de la tarjeta, pero nunca es la
+   única: la etiqueta repite el veredicto en palabras para quien no distinga
+   los colores. */
+.ta-verdict {
+  border-left-width: 4px;
+}
+
+/* El badge: aviso con fondo claro y texto del mismo tono, oscuro.
+   Especificidad `.ck-card .ta-verdict-label` (0,2,0) — tiene que ganarle a la
+   regla general `.ck-card p` (0,1,1), que también es !important. Con menos
+   especificidad el texto sale negro sobre el fondo del aviso. */
+.ck-card .ta-verdict-label,
+.ta-verdict-label {
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.3rem;
+  border: 1px solid transparent;
+  /* Neutro por defecto: mientras llega el veredicto en streaming, todavía no
+     hay nada que anunciar en color. */
+  color: #33333a !important;
+  -webkit-text-fill-color: #33333a !important;
+  background: #f0f0f4;
+  border-color: #d8d8e0;
+}
+
+.ta-verdict h3 {
+  margin: 0.15rem 0 0.35rem;
+  font-size: 1.02rem;
+  line-height: 1.4;
+}
+
+.ta-verdict p {
+  font-size: 0.92rem;
+}
+
+/* Cada veredicto es un aviso con su propio tono. El borde izquierdo queda
+   saturado para leerse de un vistazo al hacer scroll; el badge va en fondo
+   claro, que es lo legible a este tamaño. Todos por encima de 8:1 de
+   contraste. El color nunca es la única señal: la palabra siempre está. */
+.ta-verdict--verificado { border-left-color: #1f6b4a; }
+.ck-card .ta-verdict--verificado .ta-verdict-label,
+.ta-verdict--verificado .ta-verdict-label {
+  color: #14532d !important;
+  -webkit-text-fill-color: #14532d !important;
+  background: #dcfce7;
+  border-color: #a7e0bd;
+}
+
+.ta-verdict--falso { border-left-color: #a8281a; }
+.ck-card .ta-verdict--falso .ta-verdict-label,
+.ta-verdict--falso .ta-verdict-label {
+  color: #7f1d1d !important;
+  -webkit-text-fill-color: #7f1d1d !important;
+  background: #fee2e2;
+  border-color: #f3b6b6;
+}
+
+.ta-verdict--engañoso { border-left-color: #9a5b00; }
+.ck-card .ta-verdict--engañoso .ta-verdict-label,
+.ta-verdict--engañoso .ta-verdict-label {
+  color: #7c2d12 !important;
+  -webkit-text-fill-color: #7c2d12 !important;
+  background: #ffedd5;
+  border-color: #f7c99b;
+}
+
+.ta-verdict--sin_evidencia { border-left-color: #b8860b; }
+.ck-card .ta-verdict--sin_evidencia .ta-verdict-label,
+.ta-verdict--sin_evidencia .ta-verdict-label {
+  color: #713f12 !important;
+  -webkit-text-fill-color: #713f12 !important;
+  background: #fef9c3;
+  border-color: #ecdb8a;
+}
 
 .ta-verdict-hint {
-  color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.87rem;
   margin: 0 0 0.5rem;
 }
 
+/* ── Afirmaciones ────────────────────────────────────────────────────────── */
 .ta-claims {
   list-style: none;
   padding: 0;
   margin: 0.5rem 0 0;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.75rem;
 }
 
 .ta-claims li {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.55rem;
   align-items: flex-start;
 }
 
 .ta-claim-mark {
   font-weight: 700;
   line-height: 1.5;
-  min-width: 1rem;
+  min-width: 1.1rem;
   text-align: center;
+  flex-shrink: 0;
 }
 
-.ta-claim--verificado .ta-claim-mark { color: #2e7d5b; }
-.ta-claim--falso .ta-claim-mark { color: #c0392b; }
-.ta-claim--engañoso .ta-claim-mark { color: #c77700; }
+.ta-claim--verificado .ta-claim-mark { color: #1f6b4a !important; -webkit-text-fill-color: #1f6b4a !important; }
+.ta-claim--falso .ta-claim-mark { color: #a8281a !important; -webkit-text-fill-color: #a8281a !important; }
+.ta-claim--engañoso .ta-claim-mark { color: #9a5b00 !important; -webkit-text-fill-color: #9a5b00 !important; }
 .ta-claim--sin_evidencia .ta-claim-mark,
-.ta-claim--opinion .ta-claim-mark { color: var(--muted); }
+.ta-claim--opinion .ta-claim-mark { color: var(--text) !important; -webkit-text-fill-color: var(--text) !important; }
 
-.ta-claim-text { margin: 0; }
+.ta-claim-text {
+  margin: 0 0 0.15rem;
+  font-size: 0.92rem;
+}
 
 .ta-claim-status {
-  font-size: 0.78rem;
+  display: inline-block;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--muted);
+  font-weight: 600;
 }
 
+.ta-claim-note {
+  font-size: 0.85rem;
+  margin: 0.15rem 0 0;
+}
+
+/* ── Fuentes ─────────────────────────────────────────────────────────────
+   Tienen que verse clicables sin dudarlo: la promesa del producto es que
+   podés abrir la evidencia y leerla vos. */
 .ta-sources {
   margin: 0.5rem 0 0;
-  padding-left: 1.1rem;
+  padding-left: 1.15rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.7rem;
+  font-size: 0.9rem;
+}
+
+.ta-sources a {
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .ta-source-date {
-  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.ta-source-quote {
+  margin: 0.2rem 0 0;
   font-size: 0.85rem;
 }
