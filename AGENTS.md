@@ -57,6 +57,10 @@ Nuestras, del trabajo de este evento:
 - **Todas las props de los componentes de UI generativa son opcionales.** Los argumentos
   llegan en streaming antes de que apliquen los defaults del esquema; una prop
   obligatoria revienta en el primer render.
+- **`.env.example` y `.env` tienen que declarar las mismas variables.** Al sumar,
+  quitar o renombrar una variable de entorno, actualizá ambos en el mismo cambio.
+  En `.env.example` conservá únicamente defaults no sensibles y dejá vacías las
+  claves, tokens y URLs privadas; `.env` no se commitea ni se expone en logs o chat.
 - **El enum del veredicto es un contrato** entre `verify-prompt.ts` y `verdict_card` en
   `generative-ui.tsx`. Si cambiás uno sin el otro, la tarjeta se queda en «Analizando…»
   para siempre.
