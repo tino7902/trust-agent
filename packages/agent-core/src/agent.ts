@@ -1,5 +1,5 @@
 import { BuiltInAgent, type ToolDefinition } from "@copilotkit/runtime/v2";
-import { resolveModel } from "./model";
+import { resolveModel, resolveModelProviderOptions } from "./model";
 import { SYSTEM_PROMPT } from "./prompt";
 import { workplaceMcpServers } from "./capabilities/workplace";
 
@@ -34,6 +34,9 @@ export type AgentFactoryOptions = {
 export function makeAgent(threadId: string, options: AgentFactoryOptions = {}) {
   const agent = new BuiltInAgent({
     model: resolveModel(),
+    // OpenRouter exposes GPT-5's reasoning effort through the OpenAI-compatible
+    // API. "low" is the default for a responsive verification panel.
+    providerOptions: resolveModelProviderOptions(),
     prompt: options.prompt ?? SYSTEM_PROMPT,
 
     // Surface-specific server tools, when the surface supplies any.

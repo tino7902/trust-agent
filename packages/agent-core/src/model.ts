@@ -2,9 +2,29 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { DEFAULT_MODEL } from "./model-meta";
 
+const REASONING_EFFORTS = ["minimal", "low", "medium", "high"] as const;
+type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
+
 function canonicalProvider(provider: string) {
   const normalized = provider.trim().toLowerCase();
   return normalized === "gemini" || normalized === "google-gemini" ? "google" : normalized;
+}
+
+/**
+ * GPT-5 defaults to medium reasoning effort. The verifier benefits from a
+ * lower setting because search and source checks still happen through tools.
+ * Keep this environment-controlled so deployments can trade speed for depth
+ * without changing the selected model.
+ */
+export function resolveModelProviderOptions() {
+  const effort = (process.env.MODEL_REASONING_EFFORT ?? "low").trim().toLowerCase();
+  if (!REASONING_EFFORTS.includes(effort as ReasoningEffort)) {
+    throw new Error(
+      `MODEL_REASONING_EFFORT must be one of: ${REASONING_EFFORTS.join(", ")}.`,
+    );
+  }
+
+  return { openai: { reasoningEffort: effort as ReasoningEffort } };
 }
 
 export function resolveModel() {

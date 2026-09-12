@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
-import { resolveModel } from "./model";
+import { resolveModel, resolveModelProviderOptions } from "./model";
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -15,6 +15,7 @@ function withEnv(config: NodeJS.ProcessEnv, callback: () => void) {
   for (const key of [
     "MODEL_PROVIDER",
     "MODEL",
+    "MODEL_REASONING_EFFORT",
     "OPENAI_API_KEY",
     "OPENROUTER_API_KEY",
     "ANTHROPIC_API_KEY",
@@ -25,6 +26,28 @@ function withEnv(config: NodeJS.ProcessEnv, callback: () => void) {
   Object.assign(process.env, config);
   callback();
 }
+
+test("uses low reasoning effort by default for responsive verification", () => {
+  withEnv({}, () => {
+    assert.deepEqual(resolveModelProviderOptions(), {
+      openai: { reasoningEffort: "low" },
+    });
+  });
+});
+
+test("allows deployments to increase reasoning effort", () => {
+  withEnv({ MODEL_REASONING_EFFORT: "high" }, () => {
+    assert.deepEqual(resolveModelProviderOptions(), {
+      openai: { reasoningEffort: "high" },
+    });
+  });
+});
+
+test("rejects unsupported reasoning effort", () => {
+  withEnv({ MODEL_REASONING_EFFORT: "none" }, () => {
+    assert.throws(() => resolveModelProviderOptions(), /MODEL_REASONING_EFFORT/);
+  });
+});
 
 function resolvedChatModel() {
   const model = resolveModel();
