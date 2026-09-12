@@ -30,9 +30,24 @@ function isExtensionOrigin(origin: string): boolean {
   return origin.startsWith("chrome-extension://");
 }
 
+function newConversationId(): string {
+  // A new capture must never share the conversation that interpreted the old
+  // one. CopilotKit clears messages and disconnects any in-flight run when its
+  // threadId changes, so this id is the boundary between two captures.
+  return `trust-agent-${crypto.randomUUID()}`;
+}
+
 export function useCapturedMessage() {
   const [captured, setCaptured] = useState<CapturedMessage | null>(null);
   const [rejected, setRejected] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState(newConversationId);
+
+  const acceptCapture = useCallback((next: CapturedMessage) => {
+    setRejected(null);
+    setCaptured(next);
+    // Rotate the chat before its context can be used for a different message.
+    setConversationId(newConversationId());
+  }, []);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
@@ -50,8 +65,7 @@ export function useCapturedMessage() {
         );
         return;
       }
-      setRejected(null);
-      setCaptured(normalized);
+      acceptCapture(normalized);
     }
 
     window.addEventListener("message", onMessage);
@@ -59,7 +73,7 @@ export function useCapturedMessage() {
     // finished loading is replayed instead of lost.
     window.parent?.postMessage({ type: PANEL_READY }, "*");
     return () => window.removeEventListener("message", onMessage);
-  }, []);
+  }, [acceptCapture]);
 
   const setManual = useCallback((text: string) => {
     const normalized = normalizeCaptured({
@@ -67,16 +81,17 @@ export function useCapturedMessage() {
       source: "manual",
       capturedAt: new Date().toISOString(),
     });
-    setRejected(
-      normalized ? null : "Pegá el texto del mensaje que querés verificar.",
-    );
-    if (normalized) setCaptured(normalized);
-  }, []);
+    if (!normalized) {
+      setRejected("Pegá el texto del mensaje que querés verificar.");
+      return;
+    }
+    acceptCapture(normalized);
+  }, [acceptCapture]);
 
   const clear = useCallback(() => {
     setCaptured(null);
     setRejected(null);
   }, []);
 
-  return { captured, rejected, setManual, clear };
+  return { captured, rejected, conversationId, setManual, clear };
 }

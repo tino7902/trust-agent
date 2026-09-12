@@ -17,7 +17,7 @@ import { useCapturedMessage } from "@/lib/use-captured-message";
  * is the fallback when either surface's DOM changes.
  */
 export default function Home() {
-  const { captured, rejected, setManual, clear } = useCapturedMessage();
+  const { captured, rejected, conversationId, setManual, clear } = useCapturedMessage();
   const [draft, setDraft] = useState("");
 
   useConfigureSuggestions(
@@ -140,6 +140,7 @@ export default function Home() {
           </h2>
           <CopilotChat
             className="ck-chat"
+            threadId={conversationId}
             labels={{
               welcomeMessageText: captured
                 ? "Tengo el contenido. ¿Lo verifico?"

@@ -52,7 +52,9 @@ completa sobre WhatsApp Web o Gmail, cargá la extensión siguiendo
 3. El panel te muestra **el texto exacto que va a salir del navegador**. Todavía no se
    envió nada.
 4. **Verificar** lo manda; **Descartar** hace que nunca salga.
-5. El agente busca evidencia y responde con tres tarjetas: el veredicto, el desglose de
+5. Una captura nueva descarta por completo la conversación y veredicto del contenido
+   anterior.
+6. El agente busca evidencia y responde con tres tarjetas: el veredicto, el desglose de
    afirmaciones y las fuentes.
 
 El veredicto es uno de cuatro: **verificado**, **falso**, **engañoso** o **sin evidencia
