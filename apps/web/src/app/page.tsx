@@ -147,7 +147,6 @@ export default function Home() {
           <CopilotChat
             className="ck-chat"
             threadId={conversationId}
-            inputContainer="ta-chat-input-container"
             suggestionView={{
               container: "ta-quick-messages",
               suggestion: "ta-quick-message",
@@ -167,15 +166,20 @@ export default function Home() {
               userMessageToolbarEditMessageLabel: "Editar",
             }}
           >
-            {({ scrollView, feather, suggestionView, inputContainer }) => (
+            {/*
+              Los slots que expone CopilotChat son messageView, scrollView,
+              input y suggestionView. `feather` no está acá: vive dentro de
+              scrollView, y `inputContainer` no existe — la caja de entrada es
+              `input`, que envolvemos para conservar su estilo.
+            */}
+            {({ scrollView, suggestionView, input }) => (
               <div className="ta-chat-layout">
                 <div className="ta-chat-scroll">{scrollView}</div>
-                {feather}
                 <div className="ta-quick-actions" aria-label="Mensajes rápidos">
                   <p>Mensajes rápidos</p>
                   {suggestionView}
                 </div>
-                {inputContainer}
+                <div className="ta-chat-input-container">{input}</div>
               </div>
             )}
           </CopilotChat>
