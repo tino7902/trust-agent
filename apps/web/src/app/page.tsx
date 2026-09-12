@@ -1,39 +1,37 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import {
   CopilotChat,
   useConfigureSuggestions,
 } from "@copilotkit/react-core/v2";
 import { GenerativeUI } from "@/components/generative-ui";
-import { AppControl } from "@/components/app-control";
-import { findIncident, incidents, workspaceContext } from "@/lib/incidents";
-import { useWorkplace } from "@/lib/use-workplace";
-import { WorkplaceFollowups } from "@/components/workplace-followups";
+import { VerifyControl } from "@/components/verify-control";
+import { useCapturedMessage } from "@/lib/use-captured-message";
 
+/**
+ * Trust Agent's panel.
+ *
+ * This page runs inside the extension's side panel, next to WhatsApp Web. It
+ * also works standalone at localhost:3100 with the paste box, which is how the
+ * flow is developed and the fallback when the WhatsApp DOM changes.
+ */
 export default function Home() {
-  const [selectedId, setSelectedId] = useState<string>(incidents[0].id);
-  const workplace = useWorkplace(selectedId);
-  const { selectedIncident: incident } = workspaceContext(
-    selectedId,
-    workplace.status?.status === "connected" ? workplace.status.tasks : [],
-  );
-  const selectIncident = useCallback((id: string) => {
-    setSelectedId(findIncident(id).id);
-  }, []);
+  const { captured, rejected, setManual, clear } = useCapturedMessage();
+  const [draft, setDraft] = useState("");
 
   useConfigureSuggestions(
     {
       suggestions: [
         {
-          title: "Summarize this incident",
+          title: "¿Es verdad?",
           message:
-            "Summarize the selected incident using the page context. What needs attention?",
+            "Verificá el mensaje que tengo capturado en el panel. Separá las afirmaciones y mostrame las fuentes.",
         },
         {
-          title: "Propose a follow-up",
+          title: "¿Le contesto?",
           message:
-            "Prepare one useful Ambiguous follow-up for the selected incident. Show me the proposal before it is saved.",
+            "¿Qué le puedo contestar a quien me mandó esto, sin pelearme? Dame una respuesta corta para el grupo.",
         },
       ],
       available: "before-first-message",
@@ -44,97 +42,105 @@ export default function Home() {
   return (
     <>
       <GenerativeUI />
-      <AppControl
-        selectedId={selectedId}
-        selectIncident={selectIncident}
-        workplace={workplace}
-      />
-      <main className="ck-workspace">
+      <VerifyControl captured={captured} clear={clear} />
+      <main className="ck-workspace ta-panel">
         <header className="ck-workspace-header">
           <div>
-            <p className="ck-eyebrow">Agents, everywhere · Web example</p>
-            <h1>Incident assistant</h1>
+            <p className="ck-eyebrow">Trust Agent</p>
+            <h1>¿Esto es verdad?</h1>
             <p className="ck-intro">
-              Pick an incident. Ask your assistant. Review a follow-up.
+              Verificá el mensaje que te reenviaron, sin salir de la conversación.
             </p>
           </div>
-          <span className="ck-tag">Sample data</span>
         </header>
 
-        <div className="ck-workspace-grid">
-          <section className="ck-panel" aria-labelledby="incident-title">
-            <div className="ck-incident-picker">
-              <label htmlFor="incident-select">Incident</label>
-              <select
-                id="incident-select"
-                value={selectedId}
-                onChange={(event) => selectIncident(event.target.value)}
+        <section className="ck-panel" aria-labelledby="captured-title">
+          <h2 id="captured-title" className="ck-sr-only">
+            Mensaje capturado
+          </h2>
+
+          {captured ? (
+            <div className="ck-detail ta-captured">
+              <div className="ta-captured-meta">
+                {captured.author && <strong>{captured.author}</strong>}
+                {captured.chat && <span className="ck-muted"> · {captured.chat}</span>}
+                {captured.timestamp && (
+                  <span className="ck-muted"> · {captured.timestamp}</span>
+                )}
+              </div>
+              <p className="ck-preserve-lines ta-captured-text">{captured.text}</p>
+              {captured.thread.length > 0 && (
+                <details className="ck-more">
+                  <summary>
+                    {captured.thread.length} mensaje
+                    {captured.thread.length === 1 ? "" : "s"} anterior
+                    {captured.thread.length === 1 ? "" : "es"} del chat
+                  </summary>
+                  <ol className="ck-timeline">
+                    {captured.thread.map((message, index) => (
+                      <li key={index}>
+                        <time>{message.timestamp ?? ""}</time>
+                        <div>
+                          <strong>{message.author}</strong>
+                          <p className="ck-preserve-lines">{message.text}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              )}
+              <div className="ck-actions">
+                <span className="ck-tag">
+                  {captured.source === "manual" ? "Pegado a mano" : "Leído de la pantalla"}
+                </span>
+                <button type="button" className="ck-btn ck-btn--tiny" onClick={clear}>
+                  Descartar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="ck-empty ta-empty">
+              <p>
+                Seleccioná el mensaje en WhatsApp Web y tocá <strong>Verificar</strong> en
+                la extensión, o pegalo acá abajo.
+              </p>
+              <textarea
+                className="ta-paste"
+                rows={4}
+                value={draft}
+                placeholder="Pegá el mensaje que te reenviaron…"
+                onChange={(event) => setDraft(event.target.value)}
+              />
+              <button
+                type="button"
+                className="ck-btn ck-btn--primary"
+                onClick={() => {
+                  setManual(draft);
+                  setDraft("");
+                }}
               >
-                {incidents.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.id} · {item.service}
-                  </option>
-                ))}
-              </select>
+                Usar este mensaje
+              </button>
             </div>
+          )}
 
-            <div className="ck-detail">
-              <span className="ck-status-label">{incident.status}</span>
-              <h2 id="incident-title">{incident.title}</h2>
-              <p>{incident.summary}</p>
-              <details className="ck-more" key={incident.id}>
-                <summary>Details &amp; timeline</summary>
-                <dl className="ck-detail-facts">
-                  <div>
-                    <dt>Incident lead</dt>
-                    <dd>{incident.owner}</dd>
-                  </div>
-                  <div>
-                    <dt>Severity</dt>
-                    <dd>{incident.severity}</dd>
-                  </div>
-                  <div>
-                    <dt>Last update</dt>
-                    <dd>{incident.updated}</dd>
-                  </div>
-                </dl>
-                <h3>Impact</h3>
-                <p>{incident.impact}</p>
-                <h3>Timeline</h3>
-                <ol className="ck-timeline">
-                  {incident.timeline.map((event) => (
-                    <li key={event.time}>
-                      <time>{event.time} UTC</time>
-                      <div>
-                        <strong>{event.author}</strong>
-                        <p>{event.detail}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </details>
-            </div>
+          {rejected && <p className="ck-error">{rejected}</p>}
+        </section>
 
-            <WorkplaceFollowups incidentId={selectedId} workplace={workplace} />
-          </section>
-
-          <section
-            className="ck-panel ck-assistant"
-            aria-labelledby="assistant-title"
-          >
-            <header className="ck-assistant-header">
-              <h2 id="assistant-title">Ask assistant</h2>
-              <p>It can read this incident and prepare follow-ups.</p>
-            </header>
-            <CopilotChat
-              className="ck-chat"
-              labels={{
-                welcomeMessageText: "What needs attention?",
-                chatInputPlaceholder: "Ask about this incident…",
-              }}
-            />
-          </section>
-        </div>
+        <section className="ck-panel ck-assistant" aria-labelledby="assistant-title">
+          <h2 id="assistant-title" className="ck-sr-only">
+            Verificación
+          </h2>
+          <CopilotChat
+            className="ck-chat"
+            labels={{
+              welcomeMessageText: captured
+                ? "Tengo el mensaje. ¿Lo verifico?"
+                : "Capturá un mensaje para empezar.",
+              chatInputPlaceholder: "Preguntá sobre este mensaje…",
+            }}
+          />
+        </section>
       </main>
     </>
   );

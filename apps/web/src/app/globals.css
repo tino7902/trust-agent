@@ -531,3 +531,117 @@ p {
   font-size: 13px;
   overflow-wrap: anywhere;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Trust Agent — verdict panel
+   Sits on top of the kit's tokens (--muted, --accent, --border …) so light
+   and dark behave the same as the rest of the app.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.ta-panel {
+  max-width: 34rem;
+}
+
+.ta-captured-meta {
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+
+.ta-captured-text {
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.ta-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.ta-paste {
+  width: 100%;
+  font: inherit;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  resize: vertical;
+}
+
+/* Verdict. The border colour is the fastest read on the card, so each verdict
+   owns one and the label repeats it in words for anyone who cannot use it. */
+.ta-verdict-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: var(--muted);
+}
+
+.ta-verdict--verificado { border-left-color: #2e7d5b; }
+.ta-verdict--verificado .ta-verdict-label { color: #2e7d5b; }
+.ta-verdict--falso { border-left-color: #c0392b; }
+.ta-verdict--falso .ta-verdict-label { color: #c0392b; }
+.ta-verdict--engañoso { border-left-color: #c77700; }
+.ta-verdict--engañoso .ta-verdict-label { color: #c77700; }
+.ta-verdict--sin_evidencia { border-left-color: var(--muted); }
+
+.ta-verdict-hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+}
+
+.ta-claims {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.ta-claims li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.ta-claim-mark {
+  font-weight: 700;
+  line-height: 1.5;
+  min-width: 1rem;
+  text-align: center;
+}
+
+.ta-claim--verificado .ta-claim-mark { color: #2e7d5b; }
+.ta-claim--falso .ta-claim-mark { color: #c0392b; }
+.ta-claim--engañoso .ta-claim-mark { color: #c77700; }
+.ta-claim--sin_evidencia .ta-claim-mark,
+.ta-claim--opinion .ta-claim-mark { color: var(--muted); }
+
+.ta-claim-text { margin: 0; }
+
+.ta-claim-status {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.ta-sources {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ta-source-date {
+  color: var(--muted);
+  font-size: 0.85rem;
+}

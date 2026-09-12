@@ -1,4 +1,4 @@
-import { BuiltInAgent } from "@copilotkit/runtime/v2";
+import { BuiltInAgent, type ToolDefinition } from "@copilotkit/runtime/v2";
 import { resolveModel } from "./model";
 import { SYSTEM_PROMPT } from "./prompt";
 import { workplaceMcpServers } from "./capabilities/workplace";
@@ -23,12 +23,21 @@ export type AgentFactoryOptions = {
   workplace?: boolean;
   /** Override the default incident prompt for a surface-specific starter. */
   prompt?: string;
+  /**
+   * Server-side tools for this surface. The web runtime passes `searchWebTool()`
+   * here; the key stays on the server, and `maxSteps` below is what lets the
+   * agent actually see the result before it answers.
+   */
+  tools?: ToolDefinition[];
 };
 
 export function makeAgent(threadId: string, options: AgentFactoryOptions = {}) {
   const agent = new BuiltInAgent({
     model: resolveModel(),
     prompt: options.prompt ?? SYSTEM_PROMPT,
+
+    // Surface-specific server tools, when the surface supplies any.
+    tools: options.tools ?? [],
 
     // NOT optional in practice. maxSteps defaults to 1, which means the agent
     // can call one tool and then stops — before it ever sees the result. Any

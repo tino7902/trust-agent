@@ -4,52 +4,95 @@
  * Generative UI, controlled tier.
  *
  * `useComponent` gives the agent a catalog of *your* React components and lets
- * it choose one and fill in the props. The interface stays on-brand and
- * pixel-perfect because you wrote it — the agent only decides what to show.
+ * it choose one and fill in the props. The interface stays on-brand because you
+ * wrote it — the agent only decides what to show.
  *
- * These are deliberately the same two components the Slack surface registers
- * with `defineChannelComponent`. Same agent, same intent, native rendering on
- * each surface — which is the whole claim this kit is making.
+ * Trust Agent registers three: the verdict, the per-claim breakdown, and the
+ * sources. The verdict enum here is the contract with the prompt in
+ * packages/agent-core/src/verify-prompt.ts — change one and you must change the
+ * other, or the card falls back to "Analizando…" forever.
  *
  * Renderers receive streamed partial arguments before schema defaults apply.
  */
 import { useComponent, useHumanInTheLoop } from "@copilotkit/react-core/v2";
 import { z } from "zod";
 
-import { IncidentCard, Timeline } from "./streamed-cards";
+import { ClaimCheck, SourcesList, VerdictCard } from "./verdict-cards";
 
 export function GenerativeUI() {
   useComponent({
-    name: "incident_card",
+    name: "verdict_card",
     description:
-      "Draw the current state of the incident as a card. Call this once you have read the context, and again when the picture changes.",
+      "Muestra el veredicto sobre el mensaje analizado. Llamalo apenas tengas una conclusión respaldada por búsquedas: es lo primero que lee la persona.",
     parameters: z.object({
-      headline: z.string().describe("What is broken, in under ten words."),
-      summary: z.string().describe("Who or what is affected."),
-      facts: z.array(z.object({ label: z.string(), value: z.string() })).max(4).default([]),
-      nextSteps: z.array(z.string()).max(3).default([]),
-      tone: z.enum(["neutral", "good", "attention"]).default("neutral"),
+      verdict: z
+        .enum(["verificado", "falso", "engañoso", "sin_evidencia"])
+        .describe("El veredicto. Usá sin_evidencia si la búsqueda no alcanzó; es una respuesta legítima."),
+      headline: z
+        .string()
+        .describe("La conclusión en una frase, en lenguaje llano, sin jerga."),
+      reasoning: z
+        .string()
+        .describe("Por qué llegaste a eso: qué dijo la evidencia y qué no."),
+      claimedBy: z
+        .string()
+        .optional()
+        .describe("Quién lo mandó y cuándo, si consta en el contexto de la pantalla."),
     }),
-    render: IncidentCard,
+    render: VerdictCard,
   });
 
   useComponent({
-    name: "timeline",
+    name: "claim_check",
     description:
-      "Draw an ordered timeline of what happened when. Call this when there are three or more events worth ordering.",
+      "Desglosa las afirmaciones del mensaje con su estado individual. Llamalo cuando el mensaje mezcla más de una afirmación, que es lo habitual en una cadena.",
     parameters: z.object({
       title: z.string().optional(),
-      columns: z.array(z.string()).min(1).max(4),
-      rows: z.array(z.array(z.string())),
+      claims: z
+        .array(
+          z.object({
+            claim: z.string().describe("La afirmación, con las palabras del mensaje."),
+            status: z
+              .enum(["verificado", "falso", "engañoso", "sin_evidencia", "opinion"])
+              .describe("Usá 'opinion' para lo que no es verificable, como un juicio de valor."),
+            note: z.string().optional().describe("Un dato breve que lo sustente."),
+          }),
+        )
+        .max(6)
+        .default([]),
     }),
-    render: Timeline,
+    render: ClaimCheck,
+  });
+
+  useComponent({
+    name: "sources_list",
+    description:
+      "Muestra las fuentes que respaldan el veredicto para que se puedan abrir. CRÍTICO: solo URLs devueltas por search_web. Nunca escribas acá una dirección de memoria.",
+    parameters: z.object({
+      title: z.string().optional(),
+      sources: z
+        .array(
+          z.object({
+            title: z.string(),
+            url: z.string().describe("Exactamente la URL que devolvió search_web."),
+            published: z.string().optional().describe("Fecha de publicación, si la hay."),
+            quote: z.string().optional().describe("La cita de la fuente que sostiene el punto."),
+          }),
+        )
+        .max(6)
+        .default([]),
+    }),
+    render: SourcesList,
   });
 
   /**
-   * The approval gate, web idiom.
+   * Inherited approval gate, kept for any action added later.
    *
-   * Same contract as `confirm_action` in the Slack surface: the agent must ask
-   * before anything irreversible, and cannot proceed past a refusal.
+   * Trust Agent's real control boundary sits earlier and outside this app: the
+   * extension shows the exact text and sends nothing until the user clicks
+   * Verificar. Nothing in this flow writes anywhere, so this gate is currently
+   * unused — it stays because the moment someone adds "report this to the
+   * group" it is the right shape for it.
    *
    * `respond` is a function ONLY while the tool call is executing — narrowing on
    * its presence is safer than importing the ToolCallStatus enum from
@@ -58,43 +101,43 @@ export function GenerativeUI() {
   useHumanInTheLoop({
     name: "propose_action",
     description:
-      "Ask for approval before anything that touches production. Call this FIRST and only continue if it returns approval.",
+      "Pedí autorización antes de cualquier acción irreversible. Llamalo PRIMERO y seguí solo si devuelve aprobación.",
     parameters: z.object({
-      action: z.string().describe("What you are about to do, in one plain sentence."),
-      blastRadius: z.string().describe("What this affects if it goes wrong."),
+      action: z.string().describe("Qué vas a hacer, en una frase."),
+      blastRadius: z.string().describe("A qué afecta si sale mal."),
     }),
     render: ({ args, respond, result }) => {
       if (!respond) {
         return (
           <article className="ck-card ck-card--gate">
-            <p className="ck-gate-done">{result ? String(result) : "Waiting…"}</p>
+            <p className="ck-gate-done">{result ? String(result) : "Esperando…"}</p>
           </article>
         );
       }
       return (
         <article className="ck-card ck-card--gate">
-          <h3>{args.action ?? "Confirm this action"}</h3>
+          <h3>{args.action ?? "Confirmá esta acción"}</h3>
           <p>{args.blastRadius}</p>
           <div className="ck-actions">
             <button
               type="button"
               className="ck-btn ck-btn--primary"
               onClick={() =>
-                respond("Approved by the user. Proceed, then report exactly what you did.")
+                respond("La persona aprobó. Seguí y contá exactamente qué hiciste.")
               }
             >
-              Approve
+              Aprobar
             </button>
             <button
               type="button"
               className="ck-btn"
               onClick={() =>
                 respond(
-                  "The user declined. Do not take the action, do not offer a workaround, and say plainly that nothing was changed.",
+                  "La persona rechazó. No hagas la acción, no ofrezcas un rodeo, y decí claramente que no se cambió nada.",
                 )
               }
             >
-              Cancel
+              Cancelar
             </button>
           </div>
         </article>

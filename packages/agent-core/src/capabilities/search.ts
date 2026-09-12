@@ -6,6 +6,8 @@
  * place and the binding lives at the edge.
  */
 import { Exa } from "exa-js";
+import { defineTool } from "@copilotkit/runtime/v2";
+import { searchWebParameters } from "../schemas";
 import type { SearchHit, SearchWebArgs } from "../schemas";
 
 /**
@@ -39,4 +41,26 @@ export async function searchWeb({ query, results }: SearchWebArgs): Promise<Sear
     published: hit.publishedDate ?? undefined,
     highlight: hit.highlights?.[0],
   }));
+}
+
+/**
+ * The same capability, bound as a server-side tool for BuiltInAgent.
+ *
+ * The Slack surface wraps `searchWeb` with `defineChannelTool`; the web surface
+ * had no binding at all until Trust Agent needed one — the kit registers Exa on
+ * Slack and on the voice route, but never on ordinary web chat. This is that
+ * missing edge binding, and it keeps the implementation above unduplicated.
+ *
+ * `execute` returning a string (rather than throwing) on a missing key is
+ * deliberate: the agent is instructed to report the gap instead of guessing, and
+ * it can only do that if the gap reaches it as a readable result.
+ */
+export function searchWebTool() {
+  return defineTool({
+    name: "search_web",
+    description:
+      "Busca evidencia pública para una afirmación concreta y devuelve fuentes con título, URL, fecha y una cita. Es la ÚNICA forma de obtener URLs: no cites ninguna que no haya salido de acá.",
+    parameters: searchWebParameters,
+    execute: async (args) => searchWeb(args),
+  });
 }

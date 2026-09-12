@@ -21,11 +21,22 @@ import {
   CopilotRuntime,
   createCopilotHonoHandler,
 } from "@copilotkit/runtime/v2";
-import { makeAgent } from "agent-core";
+import { makeAgent, searchWebTool, VERIFY_PROMPT } from "agent-core";
 
-// Web writes use /api/followups after a browser approval. Never expose raw MCP writes here.
+// Trust Agent's runtime. `searchWebTool()` is the Exa binding the kit never had
+// on web chat (it registers Exa on Slack and on the voice route only), and it is
+// what keeps EXA_API_KEY server-side: the browser never sees it.
+//
+// `workplace: false` stays — this surface has no Ambiguous credential and must
+// not be handed MCP tools that would 401.
 const runtime = new CopilotRuntime({
-  agents: () => ({ default: makeAgent(randomUUID(), { workplace: false }) }),
+  agents: () => ({
+    default: makeAgent(randomUUID(), {
+      workplace: false,
+      prompt: VERIFY_PROMPT,
+      tools: [searchWebTool()],
+    }),
+  }),
 });
 
 const app = createCopilotHonoHandler({
