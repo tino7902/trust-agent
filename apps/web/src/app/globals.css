@@ -628,10 +628,13 @@ body {
   position: relative;
 }
 
+/* Contiene `messageView`, que no scrollea por su cuenta: el scroll del hilo
+   vive acá. Con `overflow: hidden` —que servía cuando adentro iba `scrollView`,
+   dueño de su propio scroll— los mensajes quedaban cortados sin poder subir. */
 .ta-chat-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .ta-quick-actions {

@@ -168,13 +168,19 @@ export default function Home() {
           >
             {/*
               Los slots que expone CopilotChat son messageView, scrollView,
-              input y suggestionView. `feather` no está acá: vive dentro de
-              scrollView, y `inputContainer` no existe — la caja de entrada es
-              `input`, que envolvemos para conservar su estilo.
+              input y suggestionView. `feather` no está acá (vive dentro de
+              scrollView) y `inputContainer` no existe: la caja de entrada es
+              `input`.
+
+              OJO CON `scrollView`: ya incluye las sugerencias junto a los
+              mensajes. Usarlo y además pintar `suggestionView` mostraba los
+              botones dos veces. Para tener la sección «Mensajes rápidos» fija
+              encima del input, acá se compone `messageView` —solo los
+              mensajes— y las sugerencias se colocan una única vez.
             */}
-            {({ scrollView, suggestionView, input }) => (
+            {({ messageView, suggestionView, input }) => (
               <div className="ta-chat-layout">
-                <div className="ta-chat-scroll">{scrollView}</div>
+                <div className="ta-chat-scroll">{messageView}</div>
                 <div className="ta-quick-actions" aria-label="Mensajes rápidos">
                   <p>Mensajes rápidos</p>
                   {suggestionView}
