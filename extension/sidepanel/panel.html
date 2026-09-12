@@ -8,7 +8,7 @@
   <body>
     <header class="bar">
       <span class="brand">Trust Agent</span>
-      <button id="capture" type="button" class="primary">Capturar mensaje</button>
+      <button id="capture" type="button" class="primary">Capturar contenido</button>
     </header>
 
     <!--
@@ -27,7 +27,7 @@
 
     <p id="status" class="status" hidden></p>
 
-    <!-- The app itself. Kept out of WhatsApp's page, and its CSP, on purpose. -->
+    <!-- Kept out of Gmail and WhatsApp's pages, and their CSPs, on purpose. -->
     <iframe id="app" title="Trust Agent" src="http://localhost:3100/"></iframe>
 
     <script src="panel.js"></script>

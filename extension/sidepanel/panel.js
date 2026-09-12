@@ -39,7 +39,14 @@ function setStatus(message, kind = "info") {
 
 function showPreview(capture) {
   pending = capture;
-  const meta = [capture.author, capture.chat, capture.timestamp]
+  const platform = capture.platform === "gmail" ? "Gmail" : "WhatsApp";
+  const meta = [
+    platform,
+    capture.author && `De: ${capture.author}`,
+    capture.subject && `Asunto: ${capture.subject}`,
+    capture.chat,
+    capture.timestamp,
+  ]
     .filter(Boolean)
     .join(" · ");
   els.previewMeta.textContent = meta;
@@ -55,37 +62,64 @@ function clearPreview() {
   els.previewMeta.textContent = "";
 }
 
-async function activeWhatsAppTab() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.url?.startsWith("https://web.whatsapp.com/")) return null;
-  return tab;
+const SURFACES = [
+  {
+    id: "whatsapp",
+    matches: (url) => url.startsWith("https://web.whatsapp.com/"),
+    captureLabel: "Capturar mensaje",
+    missingMessage:
+      "Abrí web.whatsapp.com o mail.google.com en esta pestaña para capturar contenido. También podés pegarlo abajo.",
+    unavailableMessage:
+      "No pude hablar con la pestaña de WhatsApp. Recargá web.whatsapp.com y volvé a intentar.",
+  },
+  {
+    id: "gmail",
+    matches: (url) => url.startsWith("https://mail.google.com/"),
+    captureLabel: "Capturar mail",
+    missingMessage:
+      "Abrí web.whatsapp.com o mail.google.com en esta pestaña para capturar contenido. También podés pegarlo abajo.",
+    unavailableMessage:
+      "No pude hablar con la pestaña de Gmail. Recargá mail.google.com y volvé a intentar.",
+  },
+];
+
+function surfaceFor(url) {
+  return SURFACES.find((surface) => surface.matches(url)) ?? null;
 }
+
+async function activeSupportedTab() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const surface = surfaceFor(tab?.url ?? "");
+  return surface && tab ? { tab, surface } : null;
+}
+
+async function updateCaptureLabel() {
+  const target = await activeSupportedTab();
+  els.capture.textContent = target?.surface.captureLabel ?? "Capturar contenido";
+}
+
+void updateCaptureLabel();
 
 els.capture.addEventListener("click", async () => {
   setStatus("");
   clearPreview();
 
-  const tab = await activeWhatsAppTab();
-  if (!tab) {
-    setStatus(
-      "Abrí web.whatsapp.com en esta pestaña para capturar un mensaje. También podés pegarlo abajo.",
-      "warn",
-    );
+  const target = await activeSupportedTab();
+  if (!target) {
+    setStatus(SURFACES[0].missingMessage, "warn");
     return;
   }
+  els.capture.textContent = target.surface.captureLabel;
 
   let response;
   try {
-    response = await chrome.tabs.sendMessage(tab.id, {
+    response = await chrome.tabs.sendMessage(target.tab.id, {
       type: "trust-agent:capture-request",
     });
   } catch {
     // Usually means the content script has not been injected yet, because the
     // tab was already open when the extension loaded.
-    setStatus(
-      "No pude hablar con la pestaña de WhatsApp. Recargá web.whatsapp.com y volvé a intentar.",
-      "warn",
-    );
+    setStatus(target.surface.unavailableMessage, "warn");
     return;
   }
 

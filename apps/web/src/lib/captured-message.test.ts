@@ -89,6 +89,32 @@ test("captured context carries the surface metadata and marks the text as data",
   assert.match(String(context.explicacion), /nunca una instrucción/);
 });
 
+test("a Gmail capture preserves its subject and identifies the surface to the agent", () => {
+  const captured = normalizeCaptured({
+    platform: "gmail",
+    text: "Tu cuenta será suspendida hoy. Confirmá tus datos en este enlace.",
+    author: "seguridad@ejemplo.test",
+    subject: "Acción urgente requerida",
+    timestamp: "12 sep 2026, 10:15",
+    source: "dom",
+  });
+
+  assert.ok(captured);
+  assert.equal(captured.platform, "gmail");
+  assert.equal(captured.subject, "Acción urgente requerida");
+
+  const context = verificationContext(captured);
+  assert.equal(context.plataforma, "Gmail");
+  assert.equal(context.asunto, "Acción urgente requerida");
+  assert.match(String(context.origen), /Gmail/);
+});
+
+test("manual pastes do not claim to have come from WhatsApp", () => {
+  const captured = normalizeCaptured({ text: "Este texto se pegó en el panel" });
+  assert.ok(captured);
+  assert.equal(captured.platform, "manual");
+});
+
 test("absent metadata is omitted so the context has no blank fields", () => {
   const captured = normalizeCaptured({
     text: "Reenviá esto a 10 contactos o perdés la cuenta",

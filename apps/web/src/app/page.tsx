@@ -12,9 +12,9 @@ import { useCapturedMessage } from "@/lib/use-captured-message";
 /**
  * Trust Agent's panel.
  *
- * This page runs inside the extension's side panel, next to WhatsApp Web. It
- * also works standalone at localhost:3100 with the paste box, which is how the
- * flow is developed and the fallback when the WhatsApp DOM changes.
+ * This page runs inside the extension's side panel, next to WhatsApp Web or
+ * Gmail. It also works standalone at localhost:3100 with the paste box, which
+ * is the fallback when either surface's DOM changes.
  */
 export default function Home() {
   const { captured, rejected, setManual, clear } = useCapturedMessage();
@@ -29,9 +29,9 @@ export default function Home() {
             "Verificá el mensaje que tengo capturado en el panel. Separá las afirmaciones y mostrame las fuentes.",
         },
         {
-          title: "¿Le contesto?",
+          title: "¿Parece una estafa?",
           message:
-            "¿Qué le puedo contestar a quien me mandó esto, sin pelearme? Dame una respuesta corta para el grupo.",
+            "¿Parece una estafa o intento de phishing? Decime qué señales ves y qué conviene hacer, sin abrir enlaces ni dar datos.",
         },
       ],
       available: "before-first-message",
@@ -49,7 +49,7 @@ export default function Home() {
             <p className="ck-eyebrow">Trust Agent</p>
             <h1>¿Esto es verdad?</h1>
             <p className="ck-intro">
-              Verificá el mensaje que te reenviaron, sin salir de la conversación.
+              Verificá un mensaje o mail sospechoso, sin salir de donde lo recibiste.
             </p>
           </div>
         </header>
@@ -62,7 +62,14 @@ export default function Home() {
           {captured ? (
             <div className="ck-detail ta-captured">
               <div className="ta-captured-meta">
-                {captured.author && <strong>{captured.author}</strong>}
+                <strong>
+                  {captured.platform === "gmail" ? "Mail de Gmail" :
+                    captured.platform === "whatsapp" ? "Mensaje de WhatsApp" : "Texto pegado"}
+                </strong>
+                {captured.author && <span> · {captured.author}</span>}
+                {captured.subject && (
+                  <span className="ck-muted"> · Asunto: {captured.subject}</span>
+                )}
                 {captured.chat && <span className="ck-muted"> · {captured.chat}</span>}
                 {captured.timestamp && (
                   <span className="ck-muted"> · {captured.timestamp}</span>
@@ -74,7 +81,7 @@ export default function Home() {
                   <summary>
                     {captured.thread.length} mensaje
                     {captured.thread.length === 1 ? "" : "s"} anterior
-                    {captured.thread.length === 1 ? "" : "es"} del chat
+                    {captured.thread.length === 1 ? "" : "es"} del hilo
                   </summary>
                   <ol className="ck-timeline">
                     {captured.thread.map((message, index) => (
@@ -101,14 +108,14 @@ export default function Home() {
           ) : (
             <div className="ck-empty ta-empty">
               <p>
-                Seleccioná el mensaje en WhatsApp Web y tocá <strong>Verificar</strong> en
-                la extensión, o pegalo acá abajo.
+                Seleccioná el mensaje en WhatsApp Web o el mail en Gmail y tocá
+                <strong> Verificar</strong> en la extensión, o pegalo acá abajo.
               </p>
               <textarea
                 className="ta-paste"
                 rows={4}
                 value={draft}
-                placeholder="Pegá el mensaje que te reenviaron…"
+                placeholder="Pegá el mensaje o mail que querés verificar…"
                 onChange={(event) => setDraft(event.target.value)}
               />
               <button
@@ -135,9 +142,9 @@ export default function Home() {
             className="ck-chat"
             labels={{
               welcomeMessageText: captured
-                ? "Tengo el mensaje. ¿Lo verifico?"
-                : "Capturá un mensaje para empezar.",
-              chatInputPlaceholder: "Preguntá sobre este mensaje…",
+                ? "Tengo el contenido. ¿Lo verifico?"
+                : "Capturá un mensaje o mail para empezar.",
+              chatInputPlaceholder: "Preguntá sobre este contenido…",
             }}
           />
         </section>

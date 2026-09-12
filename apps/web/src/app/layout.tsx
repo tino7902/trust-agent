@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Trust Agent — ¿esto es verdad?",
   description:
-    "Verificá un mensaje reenviado de WhatsApp sin salir de la conversación, con fuentes que podés abrir.",
+    "Verificá un mensaje de WhatsApp o mail de Gmail sin salir de la conversación, con fuentes que podés abrir.",
 };
 
 export default function RootLayout({

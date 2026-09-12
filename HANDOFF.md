@@ -8,9 +8,9 @@ que ya está hecho, lo que falta y las decisiones que **no** hay que reabrir.
 
 ## El proyecto
 
-**Trust Agent** es un verificador de mensajes reenviados que vive en el panel lateral de
-Chrome, al lado de WhatsApp Web. Seleccionás un mensaje en la conversación que ya tenés
-abierta, y el agente lo contrasta con evidencia pública y devuelve un veredicto con
+**Trust Agent** es un verificador de mensajes reenviados y mails que vive en el panel
+lateral de Chrome, al lado de WhatsApp Web y Gmail. Seleccionás un mensaje o mail que ya
+tenés abierto, y el agente lo contrasta con evidencia pública y devuelve un veredicto con
 fuentes que podés abrir.
 
 **Para quién:** alguien que recibe una cadena alarmista en el grupo familiar y quiere
@@ -54,8 +54,8 @@ Verificación: `npm run verify` (typecheck + tests offline, sin cuentas reales) 
 ## Arquitectura
 
 ```
-web.whatsapp.com
-  └── content script  ── lee el fragmento + autor + hora + chat
+web.whatsapp.com o mail.google.com
+  └── content script  ── lee el fragmento + autor + hora + chat o asunto
          │ chrome.runtime.sendMessage
          ▼
       background.js ── abre el panel lateral
@@ -97,7 +97,7 @@ Tu asistente va a querer proponer alternativas «mejores». Estas ya se discutie
    WhatsApp Web bloquea iframes y bundles inyectados en su propia página. Al vivir en
    `chrome-extension://`, la CSP la controlamos nosotros. No intentes montar la UI
    dentro de WhatsApp.
-4. **Solo Chrome, solo WhatsApp Web.** Firefox usa `sidebarAction` en vez de
+4. **Solo Chrome, WhatsApp Web y Gmail.** Firefox usa `sidebarAction` en vez de
    `sidePanel`; soportar los dos duplica la depuración y no suma en la rúbrica.
 5. **Sin Ambiguous AI.** No tenemos la credencial. Su código sigue en el repo, heredado
    e intacto, con sus tests en verde. No lo borres ni lo conectes.
@@ -120,7 +120,7 @@ Las completas están en [`AGENTS.md`](AGENTS.md). Las cuatro que más se rompen:
 - **Ninguna URL que no haya devuelto `search_web`.** Una fuente inventada es peor que no
   responder.
 - **`getSelection()` es el cimiento de la captura.** Los selectores del DOM de WhatsApp
-  son el atajo y pueden romperse mañana; la selección del usuario no.
+  y Gmail son el atajo y pueden romperse mañana; la selección del usuario no.
 - **Props opcionales en los componentes de UI generativa.** Los argumentos llegan en
   streaming antes de los defaults del esquema.
 
@@ -134,13 +134,13 @@ Las completas están en [`AGENTS.md`](AGENTS.md). Las cuatro que más se rompen:
   la ruta de voz.
 - Captura validada y acotada, con el puente `postMessage` verificando origen.
 - Tres componentes de UI generativa: veredicto, desglose de afirmaciones, fuentes.
-- Extensión de Chrome completa, con el texto a la vista antes de enviarlo.
+- Extensión de Chrome para WhatsApp Web y Gmail, con el texto a la vista antes de enviarlo.
 - `npm run verify` en verde, `build` limpio, 7 tests nuevos.
 
 **Falta:**
-- Verificación en vivo de punta a punta con claves reales sobre WhatsApp Web.
+- Verificación en vivo de punta a punta con claves reales sobre WhatsApp Web y Gmail.
 - Grabar el video de dos minutos.
-- Gmail/phishing como segundo modo (mismo mecanismo, otros selectores), si sobra tiempo.
+- Detección semántica de enlaces sospechosos y adjuntos de mail, si sobra tiempo.
 
 ---
 

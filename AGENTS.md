@@ -1,7 +1,8 @@
 # Notas para agentes de código
 
-Trust Agent: un verificador de mensajes reenviados que vive en el panel lateral de
-Chrome, al lado de WhatsApp Web. Antes de tocar nada, leé [HANDOFF.md](HANDOFF.md)
+Trust Agent: un verificador de mensajes reenviados y mails que vive en el panel lateral
+de Chrome, al lado de WhatsApp Web y Gmail. Antes de tocar nada, leé
+[HANDOFF.md](HANDOFF.md)
 — tiene el contexto completo del proyecto y las decisiones que ya están cerradas.
 
 Este repo arranca como copia del [starter kit de Agents,
@@ -48,7 +49,7 @@ Nuestras, del trabajo de este evento:
 - **El agente no puede citar una URL que no haya devuelto `search_web`.** Es el modo de
   fallo que hunde el proyecto entero: una fuente inventada es peor que no responder.
 - **`getSelection()` es el cimiento de la captura; los selectores del DOM son el
-  atajo.** WhatsApp ofusca sus clases y puede cambiarlas sin aviso. Si la lectura del
+  atajo.** WhatsApp y Gmail cambian sus clases generadas sin aviso. Si la lectura del
   DOM falla, devolvé `{ error }` con una instrucción concreta, nunca una captura vacía
   que parezca buena.
 - **El origen se valida en los dos extremos del puente `postMessage`.** El panel solo

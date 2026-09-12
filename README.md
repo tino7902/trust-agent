@@ -1,22 +1,23 @@
 # Trust Agent
 
-**¿Esto es verdad?** Un verificador de mensajes reenviados que vive en el panel lateral
-de Chrome, al lado de WhatsApp Web.
+**¿Esto es verdad?** Un verificador de mensajes reenviados y mails que vive en el panel
+lateral de Chrome, al lado de WhatsApp Web y Gmail.
 
-Seleccionás la cadena que te llegó al grupo familiar, tocás **Verificar**, y el agente
-separa las afirmaciones, las contrasta con evidencia pública y te devuelve un veredicto
-con fuentes que podés abrir. Sin salir de la conversación y sin copiar y pegar nada.
+Seleccionás la cadena o mail que te llegó, tocás **Verificar**, y el agente separa las
+afirmaciones, las contrasta con evidencia pública y te devuelve un veredicto con fuentes
+que podés abrir. Sin salir de la conversación y sin copiar y pegar nada.
 
 Construido para el hackathon [Agents,
 Everywhere](https://aitinkerers.org/hackathons/global/agents-everywhere) (12–13 de
 septiembre de 2026).
 
-## Por qué vive dentro de WhatsApp
+## Por qué vive dentro de WhatsApp y Gmail
 
 Porque el contexto es la mitad de la respuesta. Al leer la pantalla, el agente sabe
-**quién** mandó el mensaje, **cuándo** y en qué conversación. Eso es lo que separa «una
-cadena que circula desde 2019» de «un mensaje nuevo de un número desconocido» — y es
-exactamente lo que se pierde al pegar el texto en un chatbot cualquiera.
+**quién** mandó el mensaje o mail, **cuándo**, la conversación o el asunto. Eso es lo que
+separa «una cadena que circula desde 2019» de «un mail urgente de un remitente
+desconocido» — y es exactamente lo que se pierde al pegar el texto en un chatbot
+cualquiera.
 
 ## Correlo
 
@@ -40,14 +41,14 @@ Arrancá el runtime:
 npm run dev:web     # http://localhost:3100
 ```
 
-Podés usarlo ya mismo pegando un mensaje en la caja del panel. Para la experiencia
-completa sobre WhatsApp Web, cargá la extensión siguiendo
+Podés usarlo ya mismo pegando un mensaje o mail en la caja del panel. Para la experiencia
+completa sobre WhatsApp Web o Gmail, cargá la extensión siguiendo
 [`extension/README.md`](extension/README.md).
 
 ## El flujo
 
-1. Abrís WhatsApp Web y seleccionás el mensaje que te reenviaron.
-2. En el panel, **Capturar mensaje**.
+1. Abrís WhatsApp Web o Gmail y seleccionás el mensaje o texto del mail que querés revisar.
+2. En el panel, **Capturar mensaje** o **Capturar mail**.
 3. El panel te muestra **el texto exacto que va a salir del navegador**. Todavía no se
    envió nada.
 4. **Verificar** lo manda; **Descartar** hace que nunca salga.
@@ -62,15 +63,16 @@ cualquier URL que no haya devuelto la búsqueda.
 ## Cómo está armado
 
 ```
-web.whatsapp.com → content script → panel lateral (confirmación) → iframe
+web.whatsapp.com o mail.google.com → content script → panel lateral (confirmación) → iframe
                                                                       ↓
                                           localhost:3100 · CopilotKit React
                                                                       ↓
                                         /api/copilotkit · agente + Exa
 ```
 
-El panel es una página de extensión, no DOM inyectado en WhatsApp: su CSP bloquearía un
-iframe propio. La clave de Exa vive solo en el servidor; el navegador nunca la ve.
+El panel es una página de extensión, no DOM inyectado en WhatsApp o Gmail: sus CSP
+bloquearían un iframe propio. La clave de Exa vive solo en el servidor; el navegador
+nunca la ve.
 
 Detalles de implementación y reglas del repo en [`AGENTS.md`](AGENTS.md). Contexto
 completo para sumarse al proyecto en [`HANDOFF.md`](HANDOFF.md).
@@ -106,7 +108,7 @@ borramos porque `npm run verify` los recorre y son nuestra red de seguridad.
 
 ## Límites
 
-- Solo WhatsApp Web y solo Chrome.
+- Solo WhatsApp Web, Gmail y Chrome.
 - No lee audios: llegan como `blob:` y haría falta transcripción.
-- No envía mensajes ni automatiza tu cuenta de WhatsApp. Lee la pantalla de tu propia
-  sesión cuando se lo pedís, y solo el fragmento que elegís.
+- No envía mensajes, mails ni automatiza tus cuentas. Lee la pantalla de tu propia sesión
+  cuando se lo pedís, y solo el fragmento que elegís.

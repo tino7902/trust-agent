@@ -43,10 +43,10 @@ export function useCapturedMessage() {
 
       const normalized = normalizeCaptured(data.payload);
       if (!normalized) {
-        // A capture that arrives empty is worth surfacing: it usually means the
-        // WhatsApp DOM changed and the selection fallback is the way out.
+        // A capture that arrives empty is worth surfacing: a surface DOM change
+        // should direct the person to the selector-independent fallback.
         setRejected(
-          "La extensión envió una captura vacía o ilegible. Seleccioná el texto del mensaje en WhatsApp Web y volvé a tocar Verificar.",
+          "La extensión envió una captura vacía o ilegible. Seleccioná el texto del mensaje o mail y volvé a tocar Verificar.",
         );
         return;
       }
