@@ -615,6 +615,102 @@ body {
   resize: vertical;
 }
 
+/* ── Mensajes rápidos ────────────────────────────────────────────────────
+   El panel es angosto: las sugerencias del kit no pueden quedarse escondidas
+   en la bienvenida. Se mantienen arriba de la entrada para estar disponibles
+   durante toda la verificación y cada botón es grande para tocarlo sin puntería
+   fina. */
+.ta-chat-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+}
+
+.ta-chat-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ta-quick-actions {
+  flex: 0 0 auto;
+  padding: 0.65rem 0.75rem 0.55rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.ta-quick-actions > p {
+  margin: 0 0 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ta-quick-messages {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.ta-quick-message,
+.ta-quick-messages button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.6rem 0.7rem;
+  border: 2px solid var(--text);
+  border-radius: 0.55rem;
+  background: var(--text);
+  box-shadow: 0 2px 0 #7c7c86;
+  color: #fff;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.ta-panel .ta-quick-message,
+.ta-panel .ta-quick-message *,
+.ta-panel .ta-quick-messages button,
+.ta-panel .ta-quick-messages button * {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+.ta-quick-message:hover,
+.ta-quick-messages button:hover {
+  background: #303039;
+  border-color: #303039;
+  box-shadow: 0 1px 0 #7c7c86;
+  transform: translateY(1px);
+}
+
+.ta-quick-message:focus-visible,
+.ta-quick-messages button:focus-visible {
+  outline: 3px solid #2867c9;
+  outline-offset: 2px;
+}
+
+/* CopilotKit positions its input absolutely by default. In this composition it
+   follows the quick actions, so the buttons always sit immediately above it. */
+.ta-chat-input-container {
+  position: static !important;
+  flex: 0 0 auto;
+  background: var(--surface);
+}
+
+@media (max-width: 340px) {
+  .ta-quick-messages {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Color del texto ─────────────────────────────────────────────────────
    Regla única: dentro de una tarjeta, TODO el texto va en el color normal.
    Nada de gris de apoyo. Este panel mide ~400px y lo que lleva es el
