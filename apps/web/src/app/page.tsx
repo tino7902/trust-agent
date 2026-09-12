@@ -145,6 +145,14 @@ export default function Home() {
                 ? "Tengo el contenido. ¿Lo verifico?"
                 : "Capturá un mensaje o mail para empezar.",
               chatInputPlaceholder: "Preguntá sobre este contenido…",
+              chatDisclaimerText:
+                "Puede equivocarse. Abrí las fuentes y leelas antes de decidir.",
+              assistantMessageToolbarCopyMessageLabel: "Copiar",
+              assistantMessageToolbarRegenerateLabel: "Volver a verificar",
+              assistantMessageToolbarThumbsUpLabel: "Buena respuesta",
+              assistantMessageToolbarThumbsDownLabel: "Mala respuesta",
+              userMessageToolbarCopyMessageLabel: "Copiar",
+              userMessageToolbarEditMessageLabel: "Editar",
             }}
           />
         </section>

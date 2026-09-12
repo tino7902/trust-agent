@@ -15,5 +15,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // `runtimeUrl` points at the Hono handler in app/api/copilotkit.
   // If you switch that handler to `mode: "single-route"`, you must also set
   // `useSingleEndpoint` here — the two settings have to agree.
-  return <CopilotKitProvider runtimeUrl="/api/copilotkit">{children}</CopilotKitProvider>;
+  //
+  // `enableInspector={false}`: the inspector is on by default in dev builds and
+  // floats a button over the panel. In a 400px-wide side panel it covers the
+  // verdict, and it would be on screen during the demo recording.
+  return (
+    <CopilotKitProvider runtimeUrl="/api/copilotkit" enableInspector={false}>
+      {children}
+    </CopilotKitProvider>
+  );
 }
